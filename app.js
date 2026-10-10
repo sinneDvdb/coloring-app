@@ -1,32 +1,28 @@
 const pageInput = document.getElementById('pageInput');
-const colorsInput = document.getElementById('colorsInput');
 const pagePreview = document.getElementById('pagePreview');
-const colorsPreview = document.getElementById('colorsPreview');
 const analyzeBtn = document.getElementById('analyzeBtn');
 const results = document.getElementById('results');
 const processingCanvas = document.getElementById('processingCanvas');
 const ctx = processingCanvas.getContext('2d', { willReadFrequently: true });
 
 let pageImage = null;
-let colorsImage = null;
 let analysisResult = null;
+let ohuhuPalette = [];
 
-pageInput.addEventListener('change', (e) => handleFile(e.target.files[0], pagePreview, 'page'));
-colorsInput.addEventListener('change', (e) => handleFile(e.target.files[0], colorsPreview, 'colors'));
+pageInput.addEventListener('change', (e) => handleFile(e.target.files[0], pagePreview));
 
-function handleFile(file, previewEl, type) {
+fetch('palette.json')
+    .then(r => r.json())
+    .then(data => { ohuhuPalette = data; checkReady(); });
+
+function handleFile(file, previewEl) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
-            if (type === 'page') {
-                pageImage = img;
-                document.getElementById('pageUpload').classList.add('has-image');
-            } else {
-                colorsImage = img;
-                document.getElementById('colorsUpload').classList.add('has-image');
-            }
+            pageImage = img;
+            document.getElementById('pageUpload').classList.add('has-image');
             previewEl.innerHTML = `<img src="${e.target.result}" alt="preview">`;
             checkReady();
         };
@@ -40,11 +36,11 @@ function checkReady() {
 }
 
 analyzeBtn.addEventListener('click', () => {
-    if (!pageImage || !colorsImage) return;
+    if (!pageImage) return;
     analyzeBtn.disabled = true;
     analyzeBtn.textContent = 'Analyzing...';
     setTimeout(() => {
-        analysisResult = runAnalysis(pageImage, colorsImage);
+        analysisResult = runAnalysis(pageImage);
         renderResults(analysisResult);
         analyzeBtn.disabled = false;
         analyzeBtn.textContent = 'Analyze & Create Guide';
@@ -53,9 +49,9 @@ analyzeBtn.addEventListener('click', () => {
     }, 100);
 });
 
-function runAnalysis(pageImg, colorsImg) {
+function runAnalysis(pageImg) {
     const pageResult = extractRegions(pageImg);
-    const palette = extractPalette(colorsImg);
+    const palette = ohuhuPalette;
     const matched = matchColors(pageResult.regions, palette);
     const steps = generateSteps(pageResult.regions, matched);
     const tips = generateTips(pageResult.regions, matched);
@@ -234,12 +230,24 @@ function colorDist(c1, c2) {
     return dr * dr + dg * dg + db * db;
 }
 
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+}
+
 function matchColors(regions, palette) {
     return regions.map(region => {
         let bestColor = palette[0];
         let bestDist = Infinity;
         for (const color of palette) {
-            const d = colorDist(region.color, color);
+            const hex = color.hex.startsWith('#') ? color.hex : '#' + color.hex;
+            const rgb = hexToRgb(hex);
+            if (!rgb) continue;
+            const d = colorDist(region.color, rgb);
             if (d < bestDist) { bestDist = d; bestColor = color; }
         }
         return {
@@ -256,23 +264,23 @@ function generateSteps(regions, matched) {
         .sort((a, b) => b.region.area - a.region.area);
 
     const steps = [];
-    const usedRegions = new Set();
+    const usedMarkers = new Set();
 
     for (const match of sorted) {
-        if (usedRegions.has(match.region.color.r + ',' + match.region.color.g + ',' + match.region.color.b)) continue;
-        usedRegions.add(match.region.color.r + ',' + match.region.color.g + ',' + match.region.color.b);
+        if (usedMarkers.has(match.closest.code)) continue;
+        usedMarkers.add(match.closest.code);
 
-        const r = match.closest.r, g = match.closest.g, b = match.closest.b;
-        const hex = rgbToHex(r, g, b);
-        const name = describeColor(r, g, b);
+        const code = match.closest.code;
+        const name = match.closest.name;
+        const hex = match.closest.hex.startsWith('#') ? match.closest.hex : '#' + match.closest.hex;
         const count = match.region.pixels.length;
 
         if (count > 15000) {
-            steps.push({ color: hex, name: name, text: `Background — Fill the large background area with ${name} (${hex})`, size: 'large' });
+            steps.push({ color: hex, code, name, text: `Background — Fill the large background area with ${name} (${code})`, size: 'large' });
         } else if (count > 3000) {
-            steps.push({ color: hex, name: name, text: `Main elements — Color the bigger shapes with ${name} (${hex})`, size: 'medium' });
+            steps.push({ color: hex, code, name, text: `Main elements — Color the bigger shapes with ${name} (${code})`, size: 'medium' });
         } else {
-            steps.push({ color: hex, name: name, text: `Details — Use ${name} (${hex}) for the smaller sections`, size: 'small' });
+            steps.push({ color: hex, code, name, text: `Details — Use ${name} (${code}) for the smaller sections`, size: 'small' });
         }
     }
 
@@ -288,19 +296,21 @@ function generateTips(regions, matched) {
     if (hasSmall) tips.push('Save the smallest, most detailed sections for last to avoid smudging.');
     if (regions.length > 12) tips.push('Work in sections to keep your coloring organized and avoid mixing areas.');
     tips.push('Light, even pressure gives the most consistent results.');
-    tips.push('If a color looks too intense, layer it gradually rather than applying heavy pressure.');
+    tips.push('Ohuhu alcohol markers blend well — use a lighter shade to fade edges while the ink is still wet.');
 
-    const muted = matched.filter(m => {
-        const { r, g, b } = m.closest;
-        return (r + g + b) / 3 < 80;
+    const darkMarkers = matched.filter(m => {
+        const rgb = hexToRgb(m.closest.hex);
+        if (!rgb) return false;
+        return (rgb.r + rgb.g + rgb.b) / 3 < 80;
     });
-    if (muted.length > 0) tips.push('Dark colors show mistakes more — go slowly with your darker shades.');
+    if (darkMarkers.length > 0) tips.push('Your darker markers (120, E515, V416, etc.) show mistakes more — go slowly with them.');
 
-    const bright = matched.filter(m => {
-        const { r, g, b } = m.closest;
-        return (r + g + b) / 3 > 200;
+    const lightMarkers = matched.filter(m => {
+        const rgb = hexToRgb(m.closest.hex);
+        if (!rgb) return false;
+        return (rgb.r + rgb.g + rgb.b) / 3 > 220;
     });
-    if (bright.length > 0) tips.push('Light pastels may need 2-3 layers for full coverage.');
+    if (lightMarkers.length > 0) tips.push('Your lightest pastels (B21, WG10, RV00, etc.) may need 2-3 passes for full coverage.');
 
     return tips;
 }
@@ -381,23 +391,22 @@ function renderResults(result) {
     document.getElementById('regionsMap').innerHTML = matched
         .filter(m => m.region.area > 50)
         .map(m => {
-            const hex = rgbToHex(m.closest.r, m.closest.g, m.closest.b);
-            return `<span class="region-badge"><span class="swatch" style="background:${hex}"></span>${describeColor(m.closest.r, m.closest.g, m.closest.b)}</span>`;
+            const hex = m.closest.hex.startsWith('#') ? m.closest.hex : '#' + m.closest.hex;
+            return `<span class="region-badge"><span class="swatch" style="background:${hex}"></span>${m.closest.name} (${m.closest.code})</span>`;
         }).join('');
 
-    const uniqueColors = [];
+    const uniqueMarkers = [];
+    const seenCodes = new Set();
     for (const m of matched) {
         if (m.region.area <= 50) continue;
-        const hex = rgbToHex(m.closest.r, m.closest.g, m.closest.b);
-        const exists = uniqueColors.some(u => colorDist(u, m.closest) < 500);
-        if (!exists) {
-            uniqueColors.push({ ...m.closest });
-        }
+        if (seenCodes.has(m.closest.code)) continue;
+        seenCodes.add(m.closest.code);
+        uniqueMarkers.push(m.closest);
     }
 
-    document.getElementById('matchedColors').innerHTML = uniqueColors.slice(0, 20).map(c => {
-        const hex = rgbToHex(c.r, c.g, c.b);
-        return `<div class="color-swatch-card"><span class="swatch" style="background:${hex}"></span><span class="label">${describeColor(c.r, c.g, c.b)}</span></div>`;
+    document.getElementById('matchedColors').innerHTML = uniqueMarkers.slice(0, 30).map(m => {
+        const hex = m.hex.startsWith('#') ? m.hex : '#' + m.hex;
+        return `<div class="color-swatch-card"><span class="swatch" style="background:${hex}"></span><span class="label">${m.name} (${m.code})</span></div>`;
     }).join('');
 
     document.getElementById('steps').innerHTML = steps.map(s =>
@@ -494,7 +503,7 @@ function renderGuideStep(step) {
 
     for (const s of stepsToApply) {
         const matched = analysisResult.matched.filter(m => {
-            const hex = rgbToHex(m.closest.r, m.closest.g, m.closest.b);
+            const hex = m.closest.hex.startsWith('#') ? m.closest.hex : '#' + m.closest.hex;
             return hex === s.color;
         });
         for (const m of matched) {

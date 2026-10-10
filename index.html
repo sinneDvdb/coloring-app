@@ -10,27 +10,18 @@
     <div class="app">
         <header>
             <h1>ColorMe</h1>
-            <p class="subtitle">Upload your coloring page & your paints — get a personalized guide</p>
+            <p class="subtitle">Upload your coloring page — get a personalized guide using your Ohuhu 168 markers</p>
         </header>
 
         <main>
             <section class="upload-section">
-                <div class="upload-card" id="pageUpload">
+                <div class="upload-card" id="pageUpload" style="grid-column: 1 / -1; max-width: 600px; margin: 0 auto; width: 100%;">
                     <div class="upload-icon">🎨</div>
-                    <h2>1. Upload Your Coloring Page</h2>
+                    <h2>Upload Your Coloring Page</h2>
                     <p>Photo of the empty line art you want to color</p>
                     <input type="file" id="pageInput" accept="image/*" hidden>
                     <button class="btn" onclick="document.getElementById('pageInput').click()">Choose Image</button>
                     <div class="preview" id="pagePreview"></div>
-                </div>
-
-                <div class="upload-card" id="colorsUpload">
-                    <div class="upload-icon">🖌️</div>
-                    <h2>2. Upload Your Available Colors</h2>
-                    <p>Photo of your paints, pencils, or markers laid out</p>
-                    <input type="file" id="colorsInput" accept="image/*" hidden>
-                    <button class="btn" onclick="document.getElementById('colorsInput').click()">Choose Image</button>
-                    <div class="preview" id="colorsPreview"></div>
                 </div>
             </section>
 
@@ -48,7 +39,7 @@
                     </div>
 
                     <div class="guide-panel">
-                        <h3>Your Colors (matched)</h3>
+                        <h3>Ohuhu 168 Markers</h3>
                         <div id="matchedColors" class="matched-colors"></div>
                     </div>
                 </div>
