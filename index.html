@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ColorMe — Smart Coloring Guide</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app">
+        <header>
+            <h1>ColorMe</h1>
+            <p class="subtitle">Upload your coloring page & your paints — get a personalized guide</p>
+        </header>
+
+        <main>
+            <section class="upload-section">
+                <div class="upload-card" id="pageUpload">
+                    <div class="upload-icon">🎨</div>
+                    <h2>1. Upload Your Coloring Page</h2>
+                    <p>Photo of the empty line art you want to color</p>
+                    <input type="file" id="pageInput" accept="image/*" hidden>
+                    <button class="btn" onclick="document.getElementById('pageInput').click()">Choose Image</button>
+                    <div class="preview" id="pagePreview"></div>
+                </div>
+
+                <div class="upload-card" id="colorsUpload">
+                    <div class="upload-icon">🖌️</div>
+                    <h2>2. Upload Your Available Colors</h2>
+                    <p>Photo of your paints, pencils, or markers laid out</p>
+                    <input type="file" id="colorsInput" accept="image/*" hidden>
+                    <button class="btn" onclick="document.getElementById('colorsInput').click()">Choose Image</button>
+                    <div class="preview" id="colorsPreview"></div>
+                </div>
+            </section>
+
+            <section class="actions">
+                <button class="btn-primary" id="analyzeBtn" disabled>Analyze & Create Guide</button>
+            </section>
+
+            <section class="results" id="results" hidden>
+                <h2>Your Coloring Guide</h2>
+
+                <div class="guide-layout">
+                    <div class="guide-panel">
+                        <h3>Detected Regions</h3>
+                        <div id="regionsMap" class="regions-map"></div>
+                    </div>
+
+                    <div class="guide-panel">
+                        <h3>Your Colors (matched)</h3>
+                        <div id="matchedColors" class="matched-colors"></div>
+                    </div>
+                </div>
+
+                <div class="guide-layout">
+                    <div class="guide-panel" style="grid-column: 1 / -1;">
+                        <h3>Visual Guide</h3>
+                        <div class="visual-guide">
+                            <canvas id="guideCanvas" class="guide-canvas"></canvas>
+                            <div class="guide-controls">
+                                <button class="btn-step" id="stepPrev">← Prev</button>
+                                <span class="step-indicator" id="stepIndicator">Step 0 / 0</span>
+                                <button class="btn-step" id="stepNext">Next →</button>
+                                <button class="btn-step" id="stepAutoPlay">▶ Play</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="guide-panel">
+                    <h3>Step-by-Step Guide</h3>
+                    <ol id="steps" class="steps-list"></ol>
+                </div>
+
+                <div class="guide-panel tips">
+                    <h3>Tips</h3>
+                    <ul id="tips" class="tips-list"></ul>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <canvas id="processingCanvas" hidden></canvas>
+    <script src="app.js"></script>
+</body>
+</html>
