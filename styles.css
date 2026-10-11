@@ -146,6 +146,16 @@ header h1 {
     margin-bottom: 2rem;
 }
 
+.result-actions {
+    margin-top: 0.5rem;
+}
+
+.app-error {
+    color: #a33a2b;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+
 /* Results */
 .results {
     animation: fadeIn 0.5s ease;
@@ -207,6 +217,65 @@ header h1 {
     display: flex;
     flex-wrap: wrap;
     gap: 0.6rem;
+}
+
+.color-schemes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.color-recommendation {
+    color: var(--muted);
+    margin-bottom: 1rem;
+}
+
+.scheme-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    background: #fff;
+}
+
+.scheme-card.recommended {
+    border: 2px solid var(--accent);
+    background: var(--accent-light);
+}
+
+.scheme-card h4 {
+    margin-bottom: 0.3rem;
+}
+
+.scheme-card h4 span {
+    color: var(--accent);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.scheme-card p {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-bottom: 0.45rem;
+}
+
+.scheme-card .scheme-mood {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.scheme-swatches {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    margin-top: 0.7rem;
+}
+
+.scheme-swatches span {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
 .color-swatch-card {
@@ -340,5 +409,44 @@ header h1 {
     font-weight: 600;
     color: var(--muted);
     min-width: 120px;
+    text-align: center;
+}
+
+.step-gallery {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.8rem;
+    margin-top: 0.5rem;
+}
+
+.step-thumbnail {
+    background: var(--bg);
+    border: 2px solid transparent;
+    border-radius: 10px;
+    padding: 0.4rem;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.step-thumbnail:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+}
+
+.step-thumbnail canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.step-thumbnail span {
+    display: block;
+    padding: 0.35rem 0.1rem 0.1rem;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 600;
     text-align: center;
 }
